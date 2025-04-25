@@ -1,32 +1,62 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import MessageBubble from './MessageBubble';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Image, Send } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
+import { Search, Image, Send, Loader2, Brain } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
   isUser: boolean;
   text: string;
   isPending?: boolean;
+  timestamp?: string;
+  sender?: string;
 }
 
 interface ChatInterfaceProps {
   className?: string;
   onImageSelect: (imageIndex: number) => void;
+  imageData?: File | null;
+  apiEndpoint?: string;
 }
+
+// Mock API call - replace this with your actual API integration
+const mockApiCall = async (message: string, imageData?: File | null): Promise<string> => {
+  // This would be replaced with your actual API call
+  console.log("API call with message:", message);
+  console.log("Image data:", imageData);
+  
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  // Return a mock response
+  const responses = [
+    "The highlighted area suggests potential anomalous activity requiring further analysis.",
+    "This scan reveals distinct neural patterns in the temporal lobe region that merit attention.",
+    "The frontal cortex shows unusual activity patterns that should be investigated further.",
+    "Analysis complete. The occipital region displays patterns consistent with our reference models.",
+    "The highlighted abnormality appears to be a potential tumor formation in the parietal lobe."
+  ];
+  
+  return responses[Math.floor(Math.random() * responses.length)];
+};
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
   className,
-  onImageSelect 
+  onImageSelect,
+  imageData,
+  apiEndpoint = '/api/neurovision/analyze' // Default API endpoint
 }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', isUser: false, text: "Welcome to Neurovision! Select a sample image or ask a question about visual data." }
+    { id: '1', isUser: false, text: "Welcome to Neurovision! Select a sample image or ask a question about visual data.", sender: "Neurovision AI" }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Pre-saved responses - these would come from the backend in a real implementation
   const preSavedResponses = {
@@ -65,6 +95,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     { name: "Data Patterns", category: "dataVisualization" }
   ];
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const handleSendMessage = async (text: string = inputValue) => {
     if (!text.trim() || isProcessing) return;
     
@@ -74,7 +112,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const userMessage: Message = {
       id: Date.now().toString(),
       isUser: true,
-      text: text
+      text: text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     
     // Add a pending message to show loading state
@@ -82,20 +121,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       id: (Date.now() + 1).toString(),
       isUser: false,
       text: "Processing your request...",
-      isPending: true
+      isPending: true,
+      sender: "Neurovision AI"
     };
     
     setMessages(prev => [...prev, userMessage, pendingMessage]);
     setInputValue('');
     
     try {
-      // Placeholder for API call
       // In a real implementation, this would be an API call to your backend
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulated delay
+      // const response = await fetch(apiEndpoint, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ message: text, image: imageData ? true : false })
+      // });
+      // const data = await response.json();
+      // const aiResponse = data.message;
       
-      const currentImageCategory = localStorage.getItem('currentImageCategory') || 'general';
-      const responses = preSavedResponses[currentImageCategory as keyof typeof preSavedResponses];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      // Using mock API for now
+      const aiResponse = await mockApiCall(text, imageData);
       
       // Replace pending message with actual response
       setMessages(prev => 
@@ -104,12 +148,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             ? {
                 id: msg.id,
                 isUser: false,
-                text: randomResponse
+                text: aiResponse,
+                sender: "Neurovision AI",
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               }
             : msg
         )
       );
     } catch (error) {
+      console.error("Error processing message:", error);
+      
       // Handle error case
       setMessages(prev => 
         prev.map(msg => 
@@ -117,11 +165,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             ? {
                 id: msg.id,
                 isUser: false,
-                text: "Sorry, I couldn't process your request. Please try again."
+                text: "Sorry, I couldn't process your request. Please try again.",
+                sender: "Neurovision AI",
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               }
             : msg
         )
       );
+      
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process your message. Please try again."
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -136,7 +192,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const systemMessage: Message = {
       id: Date.now().toString(),
       isUser: false,
-      text: `${sampleImages[index].name} loaded for analysis. What would you like to know about this image?`
+      text: `${sampleImages[index].name} loaded for analysis. What would you like to know about this image?`,
+      sender: "Neurovision AI",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     
     setMessages(prev => [...prev, systemMessage]);
@@ -144,26 +202,32 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className={cn("neural-card h-full flex flex-col", className)}>
-      <div className="flex items-center justify-between border-b border-border p-4">
-        <h2 className="font-semibold">Interactive Analysis</h2>
+      <div className="flex items-center justify-between border-b border-border p-3">
+        <div className="flex items-center gap-2">
+          <Brain className="size-5 text-neurodark-accent" />
+          <h2 className="font-semibold">Neurovision Assistant</h2>
+        </div>
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-green-500"></span>
           <span className="text-xs text-muted-foreground">Online</span>
         </div>
       </div>
       
-      <div className="flex-1 overflow-auto p-4 space-y-3">
+      <div className="flex-1 overflow-auto p-4 space-y-4">
         {messages.map((msg) => (
           <MessageBubble 
             key={msg.id} 
             isUser={msg.isUser} 
             message={msg.text}
-            className={msg.isPending ? "opacity-70" : ""}
+            isPending={msg.isPending}
+            timestamp={msg.timestamp}
+            sender={msg.sender}
           />
         ))}
+        <div ref={messagesEndRef} />
       </div>
       
-      <div className="p-4 border-t border-border space-y-2">
+      <div className="p-3 border-t border-border space-y-2">
         <div className="flex gap-2 overflow-x-auto pb-2">
           {sampleImages.map((img, idx) => (
             <Button
