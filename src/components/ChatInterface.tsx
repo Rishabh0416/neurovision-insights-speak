@@ -1,15 +1,16 @@
-
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import MessageBubble from './MessageBubble';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Image, Send } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface Message {
   id: string;
   isUser: boolean;
   text: string;
+  isPending?: boolean;
 }
 
 interface ChatInterfaceProps {
@@ -25,8 +26,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     { id: '1', isUser: false, text: "Welcome to Neurovision! Select a sample image or ask a question about visual data." }
   ]);
   const [inputValue, setInputValue] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Pre-saved responses based on the context
+  // Pre-saved responses - these would come from the backend in a real implementation
   const preSavedResponses = {
     brainScan: [
       "This brain scan reveals distinct neural activity patterns in the highlighted regions.",
@@ -50,7 +52,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     ]
   };
 
-  // Sample questions for the quick question buttons
   const sampleQuestions = [
     "What does this image show?",
     "Analyze the highlighted area",
@@ -58,15 +59,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     "Is this pattern normal?"
   ];
 
-  // Sample images that will be shown in the interface
   const sampleImages = [
     { name: "Brain Scan", category: "brainScan" },
     { name: "Neural Network", category: "neuralNetwork" },
     { name: "Data Patterns", category: "dataVisualization" }
   ];
 
-  const handleSendMessage = (text: string = inputValue) => {
-    if (!text.trim()) return;
+  const handleSendMessage = async (text: string = inputValue) => {
+    if (!text.trim() || isProcessing) return;
+    
+    setIsProcessing(true);
     
     // Add user message
     const userMessage: Message = {
@@ -74,23 +76,55 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       isUser: true,
       text: text
     };
-    setMessages(prev => [...prev, userMessage]);
+    
+    // Add a pending message to show loading state
+    const pendingMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      isUser: false,
+      text: "Processing your request...",
+      isPending: true
+    };
+    
+    setMessages(prev => [...prev, userMessage, pendingMessage]);
     setInputValue('');
     
-    // Simulate response selection from pre-saved responses
-    setTimeout(() => {
+    try {
+      // Placeholder for API call
+      // In a real implementation, this would be an API call to your backend
+      await new Promise(resolve => setTimeout(resolve, 800)); // Simulated delay
+      
       const currentImageCategory = localStorage.getItem('currentImageCategory') || 'general';
       const responses = preSavedResponses[currentImageCategory as keyof typeof preSavedResponses];
       const randomResponse = responses[Math.floor(Math.random() * responses.length)];
       
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        isUser: false,
-        text: randomResponse
-      };
-      
-      setMessages(prev => [...prev, botMessage]);
-    }, 800);
+      // Replace pending message with actual response
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.isPending 
+            ? {
+                id: msg.id,
+                isUser: false,
+                text: randomResponse
+              }
+            : msg
+        )
+      );
+    } catch (error) {
+      // Handle error case
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.isPending 
+            ? {
+                id: msg.id,
+                isUser: false,
+                text: "Sorry, I couldn't process your request. Please try again."
+              }
+            : msg
+        )
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSelectImage = (index: number) => {
@@ -123,7 +157,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <MessageBubble 
             key={msg.id} 
             isUser={msg.isUser} 
-            message={msg.text} 
+            message={msg.text}
+            className={msg.isPending ? "opacity-70" : ""}
           />
         ))}
       </div>
@@ -137,6 +172,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               size="sm"
               onClick={() => handleSelectImage(idx)}
               className="whitespace-nowrap"
+              disabled={isProcessing}
             >
               <Image className="w-4 h-4 mr-1" /> {img.name}
             </Button>
@@ -151,6 +187,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               size="sm"
               onClick={() => handleSendMessage(question)}
               className="whitespace-nowrap"
+              disabled={isProcessing}
             >
               <Search className="w-4 h-4 mr-1" /> {question}
             </Button>
@@ -168,9 +205,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               }
             }}
             className="bg-secondary border-border"
+            disabled={isProcessing}
           />
-          <Button onClick={() => handleSendMessage()} disabled={!inputValue.trim()}>
-            <Send className="w-4 h-4" />
+          <Button 
+            onClick={() => handleSendMessage()} 
+            disabled={!inputValue.trim() || isProcessing}
+          >
+            {isProcessing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </Button>
         </div>
       </div>
