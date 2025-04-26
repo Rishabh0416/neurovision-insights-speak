@@ -4,8 +4,9 @@ import { cn } from '@/lib/utils';
 import MessageBubble from './MessageBubble';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Image, Send, Loader2, Brain } from 'lucide-react';
+import { Search, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useMedicalContext } from '@/context/MedicalContext';
 
 interface Message {
   id: string;
@@ -19,85 +20,97 @@ interface Message {
 interface ChatInterfaceProps {
   className?: string;
   onImageSelect: (imageIndex: number) => void;
-  imageData?: File | null;
-  apiEndpoint?: string;
+  contextRegion?: string;
 }
 
 // Mock API call - replace this with your actual API integration
-const mockApiCall = async (message: string, imageData?: File | null): Promise<string> => {
-  // This would be replaced with your actual API call
+const mockApiCall = async (message: string, contextRegion: string): Promise<string> => {
   console.log("API call with message:", message);
-  console.log("Image data:", imageData);
+  console.log("Context region:", contextRegion);
   
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  await new Promise(resolve => setTimeout(resolve, 1200));
   
-  // Return a mock response
-  const responses = [
-    "The highlighted area suggests potential anomalous activity requiring further analysis.",
-    "This scan reveals distinct neural patterns in the temporal lobe region that merit attention.",
-    "The frontal cortex shows unusual activity patterns that should be investigated further.",
-    "Analysis complete. The occipital region displays patterns consistent with our reference models.",
-    "The highlighted abnormality appears to be a potential tumor formation in the parietal lobe."
-  ];
+  // Pre-saved responses based on brain regions
+  const regionResponses: Record<string, string[]> = {
+    frontal_lobe: [
+      "The frontal lobe shows abnormal activity patterns that require attention.",
+      "Analysis indicates a potential mass in the frontal region with significant contrast.",
+      "The highlighted area in the frontal lobe suggests possible tumor development."
+    ],
+    temporal_lobe: [
+      "The temporal lobe region displays unusual signal characteristics worth investigating.",
+      "Analysis reveals potential anomalies in the temporal region requiring further examination.",
+      "The highlighted area in the temporal lobe indicates possible lesion formation."
+    ],
+    parietal_lobe: [
+      "The parietal lobe shows distinct abnormalities that merit immediate attention.",
+      "Analysis suggests a developing mass in the parietal region with concerning features.",
+      "The highlighted area in the parietal cortex indicates potential malignant growth."
+    ],
+    occipital_lobe: [
+      "The occipital region displays irregular patterns consistent with possible tumor formation.",
+      "Analysis indicates unusual density variations in the occipital lobe that need investigation.",
+      "The highlighted area in the visual cortex shows concerning abnormal growth."
+    ],
+    cerebellum: [
+      "The cerebellum shows distinct structural abnormalities requiring specialized analysis.",
+      "Analysis suggests potential cerebellar lesions that may affect motor coordination.",
+      "The highlighted area in the cerebellum indicates possible malignant development."
+    ],
+    default: [
+      "The highlighted abnormality appears to be a potential tumor formation.",
+      "Analysis complete. This region displays patterns consistent with possible malignancy.",
+      "The scan reveals distinct neural patterns that merit immediate clinical attention."
+    ]
+  };
+
+  // Get responses for the specified region or use default
+  const responses = regionResponses[contextRegion] || regionResponses.default;
   
+  // Choose a random response from the region-specific or default responses
   return responses[Math.floor(Math.random() * responses.length)];
 };
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
   className,
   onImageSelect,
-  imageData,
-  apiEndpoint = '/api/neurovision/analyze' // Default API endpoint
+  contextRegion = "default"
 }) => {
+  const { uploadedImage } = useMedicalContext();
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', isUser: false, text: "Welcome to Neurovision! Select a sample image or ask a question about visual data.", sender: "Neurovision AI" }
+    { id: '1', isUser: false, text: "Welcome to Neurovision! Upload a brain scan or ask a question about visual data.", sender: "Neurovision AI" }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Pre-saved responses - these would come from the backend in a real implementation
-  const preSavedResponses = {
-    brainScan: [
-      "This brain scan reveals distinct neural activity patterns in the highlighted regions.",
-      "The highlighted area shows significant contrast, suggesting potential anomalies.",
-      "Great capture! The neural pathways are clearly visualized in this scan."
-    ],
-    neuralNetwork: [
-      "This neural network visualization shows active nodes in the highlighted sections.",
-      "The pattern indicates optimal model convergence with strong feature detection.",
-      "You're on track! The network layers show proper activation sequences."
-    ],
-    dataVisualization: [
-      "This data visualization highlights key clusters that merit further analysis.",
-      "The highlighted patterns suggest a correlation that aligns with our hypothesis.",
-      "Great work! The visualization reveals insight-rich anomalies worth investigating."
-    ],
-    general: [
-      "This image reveals interesting patterns worth exploring further.",
-      "The visual data shows promising results that align with Neurovision's analysis.",
-      "You're on the right path. Try using Neurovision's enhancement tools for more detail."
-    ]
-  };
-
   const sampleQuestions = [
-    "What does this image show?",
+    "What does this scan show?",
     "Analyze the highlighted area",
-    "Why is this region significant?",
-    "Is this pattern normal?"
-  ];
-
-  const sampleImages = [
-    { name: "Brain Scan", category: "brainScan" },
-    { name: "Neural Network", category: "neuralNetwork" },
-    { name: "Data Patterns", category: "dataVisualization" }
+    "Is this pattern abnormal?",
+    "What type of tumor is this?"
   ];
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Add a special message when new image is uploaded
+  useEffect(() => {
+    if (uploadedImage) {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        isUser: false,
+        text: "New MRI scan received. What would you like to know about this scan?",
+        sender: "Neurovision AI",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      setMessages(prev => [...prev, newMessage]);
+    }
+  }, [uploadedImage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -105,6 +118,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleSendMessage = async (text: string = inputValue) => {
     if (!text.trim() || isProcessing) return;
+    
+    if (!uploadedImage) {
+      toast({
+        variant: "warning",
+        title: "No scan uploaded",
+        description: "Please upload an MRI scan first"
+      });
+      return;
+    }
     
     setIsProcessing(true);
     
@@ -120,7 +142,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const pendingMessage: Message = {
       id: (Date.now() + 1).toString(),
       isUser: false,
-      text: "Processing your request...",
+      text: "Analyzing scan...",
       isPending: true,
       sender: "Neurovision AI"
     };
@@ -129,17 +151,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setInputValue('');
     
     try {
-      // In a real implementation, this would be an API call to your backend
-      // const response = await fetch(apiEndpoint, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ message: text, image: imageData ? true : false })
-      // });
-      // const data = await response.json();
-      // const aiResponse = data.message;
-      
-      // Using mock API for now
-      const aiResponse = await mockApiCall(text, imageData);
+      // Using mock API for now, in production this would call your backend
+      const aiResponse = await mockApiCall(text, contextRegion);
       
       // Replace pending message with actual response
       setMessages(prev => 
@@ -175,44 +188,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to process your message. Please try again."
+        title: "Analysis Error",
+        description: "Failed to analyze the scan. Please try again."
       });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleSelectImage = (index: number) => {
-    const selectedCategory = sampleImages[index].category;
-    localStorage.setItem('currentImageCategory', selectedCategory);
-    onImageSelect(index);
-    
-    // Add a system message about the selected image
-    const systemMessage: Message = {
-      id: Date.now().toString(),
-      isUser: false,
-      text: `${sampleImages[index].name} loaded for analysis. What would you like to know about this image?`,
-      sender: "Neurovision AI",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    
-    setMessages(prev => [...prev, systemMessage]);
-  };
-
   return (
-    <div className={cn("neural-card h-full flex flex-col", className)}>
-      <div className="flex items-center justify-between border-b border-border p-3">
-        <div className="flex items-center gap-2">
-          <Brain className="size-5 text-neurodark-accent" />
-          <h2 className="font-semibold">Neurovision Assistant</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-green-500"></span>
-          <span className="text-xs text-muted-foreground">Online</span>
-        </div>
-      </div>
-      
+    <div className={cn("flex-1 flex flex-col", className)}>
       <div className="flex-1 overflow-auto p-4 space-y-4">
         {messages.map((msg) => (
           <MessageBubble 
@@ -229,21 +214,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       
       <div className="p-3 border-t border-border space-y-2">
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {sampleImages.map((img, idx) => (
-            <Button
-              key={idx}
-              variant="outline"
-              size="sm"
-              onClick={() => handleSelectImage(idx)}
-              className="whitespace-nowrap"
-              disabled={isProcessing}
-            >
-              <Image className="w-4 h-4 mr-1" /> {img.name}
-            </Button>
-          ))}
-        </div>
-        
-        <div className="flex gap-2 overflow-x-auto pb-2">
           {sampleQuestions.map((question, idx) => (
             <Button
               key={idx}
@@ -251,7 +221,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               size="sm"
               onClick={() => handleSendMessage(question)}
               className="whitespace-nowrap"
-              disabled={isProcessing}
+              disabled={isProcessing || !uploadedImage}
             >
               <Search className="w-4 h-4 mr-1" /> {question}
             </Button>
@@ -260,7 +230,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         
         <div className="flex gap-2">
           <Input
-            placeholder="Ask about the visual data..."
+            placeholder="Ask about the scan..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
@@ -269,11 +239,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               }
             }}
             className="bg-secondary border-border"
-            disabled={isProcessing}
+            disabled={isProcessing || !uploadedImage}
           />
           <Button 
             onClick={() => handleSendMessage()} 
-            disabled={!inputValue.trim() || isProcessing}
+            disabled={!inputValue.trim() || isProcessing || !uploadedImage}
           >
             {isProcessing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
