@@ -121,7 +121,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     
     if (!uploadedImage) {
       toast({
-        variant: "warning",
+        variant: "destructive",
         title: "No scan uploaded",
         description: "Please upload an MRI scan first"
       });

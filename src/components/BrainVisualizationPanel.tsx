@@ -6,7 +6,7 @@ import { Brain, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMedicalContext } from '@/context/MedicalContext';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment } from '@react-three/drei';
+import { OrbitControls, Environment } from '@react-three/drei';
 
 // Define a simple brain model since we don't have the actual GLTF
 const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
@@ -38,11 +38,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[0, -1.5, -0.5]} castShadow>
         <sphereGeometry args={[1, 16, 16]} />
         <meshStandardMaterial 
-          color={brainRegion === 'cerebellum' ? colorMap.cerebellum : "#555"} 
+          color={brainRegion === 'cerebellum' ? colorMap.cerebellum : "#555"}
           emissive={brainRegion === 'cerebellum' ? colorMap.cerebellum : "#000"}
           emissiveIntensity={brainRegion === 'cerebellum' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.2} 
+          roughness={0.6}
+          metalness={0.2}
         />
       </mesh>
 
@@ -50,11 +50,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[0, -2, 0]} castShadow>
         <cylinderGeometry args={[0.5, 0.3, 1.5, 16]} />
         <meshStandardMaterial 
-          color={brainRegion === 'brain_stem' ? colorMap.brain_stem : "#666"} 
+          color={brainRegion === 'brain_stem' ? colorMap.brain_stem : "#666"}
           emissive={brainRegion === 'brain_stem' ? colorMap.brain_stem : "#000"}
           emissiveIntensity={brainRegion === 'brain_stem' ? 0.5 : 0}
-          roughness={0.7} 
-          metalness={0.1} 
+          roughness={0.7}
+          metalness={0.1}
         />
       </mesh>
 
@@ -62,11 +62,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[0, 0.8, 1.5]} castShadow>
         <sphereGeometry args={[1.2, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial 
-          color={brainRegion === 'frontal_lobe' ? colorMap.frontal_lobe : "#555"} 
+          color={brainRegion === 'frontal_lobe' ? colorMap.frontal_lobe : "#555"}
           emissive={brainRegion === 'frontal_lobe' ? colorMap.frontal_lobe : "#000"}
           emissiveIntensity={brainRegion === 'frontal_lobe' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.2} 
+          roughness={0.6}
+          metalness={0.2}
         />
       </mesh>
 
@@ -74,11 +74,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[-1.5, 0, 0.5]} castShadow>
         <sphereGeometry args={[1, 16, 16]} />
         <meshStandardMaterial 
-          color={brainRegion === 'temporal_lobe' ? colorMap.temporal_lobe : "#555"} 
+          color={brainRegion === 'temporal_lobe' ? colorMap.temporal_lobe : "#555"}
           emissive={brainRegion === 'temporal_lobe' ? colorMap.temporal_lobe : "#000"}
           emissiveIntensity={brainRegion === 'temporal_lobe' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.2} 
+          roughness={0.6}
+          metalness={0.2}
         />
       </mesh>
 
@@ -86,11 +86,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[1.5, 0, 0.5]} castShadow>
         <sphereGeometry args={[1, 16, 16]} />
         <meshStandardMaterial 
-          color={brainRegion === 'temporal_lobe' ? colorMap.temporal_lobe : "#555"} 
+          color={brainRegion === 'temporal_lobe' ? colorMap.temporal_lobe : "#555"}
           emissive={brainRegion === 'temporal_lobe' ? colorMap.temporal_lobe : "#000"}
           emissiveIntensity={brainRegion === 'temporal_lobe' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.2} 
+          roughness={0.6}
+          metalness={0.2}
         />
       </mesh>
 
@@ -98,11 +98,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[0, 1, 0]} castShadow>
         <sphereGeometry args={[1.2, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial 
-          color={brainRegion === 'parietal_lobe' ? colorMap.parietal_lobe : "#555"} 
+          color={brainRegion === 'parietal_lobe' ? colorMap.parietal_lobe : "#555"}
           emissive={brainRegion === 'parietal_lobe' ? colorMap.parietal_lobe : "#000"}
           emissiveIntensity={brainRegion === 'parietal_lobe' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.2} 
+          roughness={0.6}
+          metalness={0.2}
         />
       </mesh>
 
@@ -110,11 +110,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[0, 0.8, -1.5]} castShadow>
         <sphereGeometry args={[1, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial 
-          color={brainRegion === 'occipital_lobe' ? colorMap.occipital_lobe : "#555"} 
+          color={brainRegion === 'occipital_lobe' ? colorMap.occipital_lobe : "#555"}
           emissive={brainRegion === 'occipital_lobe' ? colorMap.occipital_lobe : "#000"}
           emissiveIntensity={brainRegion === 'occipital_lobe' ? 0.5 : 0}
-          roughness={0.7} 
-          metalness={0.1} 
+          roughness={0.7}
+          metalness={0.1}
         />
       </mesh>
 
@@ -122,11 +122,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[0, -0.5, 0.5]} castShadow>
         <sphereGeometry args={[0.4, 16, 16]} />
         <meshStandardMaterial 
-          color={brainRegion === 'hypothalamus' ? colorMap.hypothalamus : "#777"} 
+          color={brainRegion === 'hypothalamus' ? colorMap.hypothalamus : "#777"}
           emissive={brainRegion === 'hypothalamus' ? colorMap.hypothalamus : "#000"}
           emissiveIntensity={brainRegion === 'hypothalamus' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.3} 
+          roughness={0.6}
+          metalness={0.3}
         />
       </mesh>
 
@@ -134,11 +134,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[0, 0, 0]} castShadow>
         <sphereGeometry args={[0.6, 16, 16]} />
         <meshStandardMaterial 
-          color={brainRegion === 'thalamus' ? colorMap.thalamus : "#666"} 
+          color={brainRegion === 'thalamus' ? colorMap.thalamus : "#666"}
           emissive={brainRegion === 'thalamus' ? colorMap.thalamus : "#000"}
           emissiveIntensity={brainRegion === 'thalamus' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.2} 
+          roughness={0.6}
+          metalness={0.2}
         />
       </mesh>
       
@@ -146,11 +146,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[-0.8, -0.3, 0.3]} castShadow>
         <sphereGeometry args={[0.3, 16, 16]} />
         <meshStandardMaterial 
-          color={brainRegion === 'amygdala' ? colorMap.amygdala : "#777"} 
+          color={brainRegion === 'amygdala' ? colorMap.amygdala : "#777"}
           emissive={brainRegion === 'amygdala' ? colorMap.amygdala : "#000"}
           emissiveIntensity={brainRegion === 'amygdala' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.3} 
+          roughness={0.6}
+          metalness={0.3}
         />
       </mesh>
       
@@ -158,11 +158,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[0.8, -0.3, 0.3]} castShadow>
         <sphereGeometry args={[0.3, 16, 16]} />
         <meshStandardMaterial 
-          color={brainRegion === 'amygdala' ? colorMap.amygdala : "#777"} 
+          color={brainRegion === 'amygdala' ? colorMap.amygdala : "#777"}
           emissive={brainRegion === 'amygdala' ? colorMap.amygdala : "#000"}
           emissiveIntensity={brainRegion === 'amygdala' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.3} 
+          roughness={0.6}
+          metalness={0.3}
         />
       </mesh>
       
@@ -170,11 +170,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[-1, -0.5, -0.2]} castShadow>
         <torusGeometry args={[0.3, 0.1, 8, 16, Math.PI]} />
         <meshStandardMaterial 
-          color={brainRegion === 'hippocampus' ? colorMap.hippocampus : "#777"} 
+          color={brainRegion === 'hippocampus' ? colorMap.hippocampus : "#777"}
           emissive={brainRegion === 'hippocampus' ? colorMap.hippocampus : "#000"}
           emissiveIntensity={brainRegion === 'hippocampus' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.3} 
+          roughness={0.6}
+          metalness={0.3}
         />
       </mesh>
       
@@ -182,11 +182,11 @@ const BrainModel = ({ brainRegion }: { brainRegion: string }) => {
       <mesh position={[1, -0.5, -0.2]} castShadow>
         <torusGeometry args={[0.3, 0.1, 8, 16, Math.PI]} />
         <meshStandardMaterial 
-          color={brainRegion === 'hippocampus' ? colorMap.hippocampus : "#777"} 
+          color={brainRegion === 'hippocampus' ? colorMap.hippocampus : "#777"}
           emissive={brainRegion === 'hippocampus' ? colorMap.hippocampus : "#000"}
           emissiveIntensity={brainRegion === 'hippocampus' ? 0.5 : 0}
-          roughness={0.6} 
-          metalness={0.3} 
+          roughness={0.6}
+          metalness={0.3}
         />
       </mesh>
       

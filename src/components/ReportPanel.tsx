@@ -101,7 +101,7 @@ const ReportPanel: React.FC<ReportPanelProps> = ({ className }) => {
   const handleGenerateReport = async () => {
     if (!uploadedImage) {
       toast({
-        variant: "warning",
+        variant: "destructive",
         title: "No scan uploaded",
         description: "Please upload an MRI scan first"
       });
