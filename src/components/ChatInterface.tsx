@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import MessageBubble from './MessageBubble';
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMedicalContext } from '@/context/MedicalContext';
-import { reportTemplates } from './ReportPanel';
+import { reportTemplates } from '@/utils/reportTemplates';
 
 interface Message {
   id: string;
