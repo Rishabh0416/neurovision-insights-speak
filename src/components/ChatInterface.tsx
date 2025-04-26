@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import MessageBubble from './MessageBubble';
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMedicalContext } from '@/context/MedicalContext';
+import { reportTemplates } from './ReportPanel';
 
 interface Message {
   id: string;
@@ -23,53 +23,38 @@ interface ChatInterfaceProps {
   contextRegion?: string;
 }
 
-// Mock API call - replace this with your actual API integration
 const mockApiCall = async (message: string, contextRegion: string): Promise<string> => {
-  console.log("API call with message:", message);
-  console.log("Context region:", contextRegion);
-  
-  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1200));
   
-  // Pre-saved responses based on brain regions
-  const regionResponses: Record<string, string[]> = {
-    frontal_lobe: [
-      "The frontal lobe shows abnormal activity patterns that require attention.",
-      "Analysis indicates a potential mass in the frontal region with significant contrast.",
-      "The highlighted area in the frontal lobe suggests possible tumor development."
-    ],
-    temporal_lobe: [
-      "The temporal lobe region displays unusual signal characteristics worth investigating.",
-      "Analysis reveals potential anomalies in the temporal region requiring further examination.",
-      "The highlighted area in the temporal lobe indicates possible lesion formation."
-    ],
-    parietal_lobe: [
-      "The parietal lobe shows distinct abnormalities that merit immediate attention.",
-      "Analysis suggests a developing mass in the parietal region with concerning features.",
-      "The highlighted area in the parietal cortex indicates potential malignant growth."
-    ],
-    occipital_lobe: [
-      "The occipital region displays irregular patterns consistent with possible tumor formation.",
-      "Analysis indicates unusual density variations in the occipital lobe that need investigation.",
-      "The highlighted area in the visual cortex shows concerning abnormal growth."
-    ],
-    cerebellum: [
-      "The cerebellum shows distinct structural abnormalities requiring specialized analysis.",
-      "Analysis suggests potential cerebellar lesions that may affect motor coordination.",
-      "The highlighted area in the cerebellum indicates possible malignant development."
-    ],
-    default: [
-      "The highlighted abnormality appears to be a potential tumor formation.",
-      "Analysis complete. This region displays patterns consistent with possible malignancy.",
-      "The scan reveals distinct neural patterns that merit immediate clinical attention."
-    ]
+  // Get the report data for the current region
+  const regionData = reportTemplates[contextRegion] || reportTemplates.default;
+  
+  // Define response patterns based on the question and report data
+  const responsePatterns: Record<string, (data: any) => string> = {
+    'show': (data) => `The scan shows ${data.deformityType} in the ${contextRegion.replace('_', ' ')} region.`,
+    'analysis': (data) => `Analysis indicates a ${data.tumorType} with ${data.severity} severity.`,
+    'symptoms': (data) => `Common symptoms include: ${data.symptoms.join(', ')}.`,
+    'recommendations': (data) => `Key recommendations: ${data.recommendations.join(', ')}.`,
+    'default': (data) => `The ${contextRegion.replace('_', ' ')} shows ${data.deformityType} patterns that require attention.`
   };
 
-  // Get responses for the specified region or use default
-  const responses = regionResponses[contextRegion] || regionResponses.default;
-  
-  // Choose a random response from the region-specific or default responses
-  return responses[Math.floor(Math.random() * responses.length)];
+  // Match the question type with keywords
+  const lowerMessage = message.toLowerCase();
+  let response = '';
+
+  if (lowerMessage.includes('show') || lowerMessage.includes('see') || lowerMessage.includes('scan')) {
+    response = responsePatterns.show(regionData);
+  } else if (lowerMessage.includes('analysis') || lowerMessage.includes('result')) {
+    response = responsePatterns.analysis(regionData);
+  } else if (lowerMessage.includes('symptoms') || lowerMessage.includes('effects')) {
+    response = responsePatterns.symptoms(regionData);
+  } else if (lowerMessage.includes('recommend') || lowerMessage.includes('treatment')) {
+    response = responsePatterns.recommendations(regionData);
+  } else {
+    response = responsePatterns.default(regionData);
+  }
+
+  return response;
 };
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
@@ -97,7 +82,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Add a special message when new image is uploaded
   useEffect(() => {
     if (uploadedImage) {
       const newMessage: Message = {
@@ -130,7 +114,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     
     setIsProcessing(true);
     
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       isUser: true,
@@ -138,7 +121,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     
-    // Add a pending message to show loading state
     const pendingMessage: Message = {
       id: (Date.now() + 1).toString(),
       isUser: false,
@@ -151,10 +133,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setInputValue('');
     
     try {
-      // Using mock API for now, in production this would call your backend
       const aiResponse = await mockApiCall(text, contextRegion);
       
-      // Replace pending message with actual response
       setMessages(prev => 
         prev.map(msg => 
           msg.isPending 
@@ -171,7 +151,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } catch (error) {
       console.error("Error processing message:", error);
       
-      // Handle error case
       setMessages(prev => 
         prev.map(msg => 
           msg.isPending 
